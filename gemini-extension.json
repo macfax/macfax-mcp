@@ -1,0 +1,11 @@
+{
+  "name": "macfax",
+  "version": "1.0.0",
+  "description": "Used-Mac market tools: quality-gated live listings across eBay/Craigslist/OfferUp/Swappa with deep links, asking-price stats per exact configuration, listing trust checks, serial lookup, verified condition reports, and standing alerts. Free, no account. All prices are asking prices, not sold prices.",
+  "mcpServers": {
+    "macfax": {
+      "httpUrl": "https://macfax.com/mcp",
+      "timeout": 30000
+    }
+  }
+}

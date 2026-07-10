@@ -1,0 +1,37 @@
+{
+  "name": "macfax-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the used-Mac market: quality-gated live listings with deep links, asking-price stats per configuration, listing trust checks, serial lookup, verified condition reports, and standing alerts. Wraps the free Macfax API (macfax.com/developers).",
+  "type": "module",
+  "bin": {
+    "macfax-mcp": "index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^3.25.0"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "mac",
+    "macbook",
+    "used-mac",
+    "marketplace",
+    "price-data"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/macfax/macfax-mcp.git"
+  },
+  "homepage": "https://macfax.com/developers",
+  "license": "MIT"
+}
