@@ -103,7 +103,7 @@ server.registerTool(
   {
     title: "Look up a Mac serial number",
     description:
-      "Check a Mac serial number: whether a verified Macfax report exists for it, plus the model and year decoded from Apple's data for pre-2021 serials. 2021+ Macs have 10-character randomized serials that encode nothing, so for those the honest answer is the format check and the report cross-reference. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
+      "Resolve a Mac serial number to its model: pre-2021 serials from Apple's config-code data (model and year), and 2021+ randomized serials from Apple's own device database (model and Apple code) — the characters encode nothing, so this is Apple's authoritative record, not a decode. Also reports whether a verified Macfax report exists for the serial. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
     inputSchema: {
       serial: z
         .string()
