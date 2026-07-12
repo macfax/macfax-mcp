@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// macfax-mcp — a local stdio MCP server for the used-Mac market, wrapping the
+// macfax-mcp: a local stdio MCP server for the used-Mac market, wrapping the
 // free Macfax HTTP API (https://macfax.com/developers). Prefer the hosted
 // remote server (https://macfax.com/mcp, streamable HTTP, no auth) when your
 // client supports remote MCP; this wrapper exists for stdio-only clients and
@@ -9,28 +9,71 @@
 // prices. Set MACFAX_API_KEY for ~10x rate limits (mint one free, no email:
 // `curl -X POST https://macfax.com/api/v1/keys`).
 
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
+const { version: VERSION } = createRequire(import.meta.url)("./package.json");
+
 const API = process.env.MACFAX_API_URL ?? "https://macfax.com/api/v1";
 const KEY = process.env.MACFAX_API_KEY ?? null;
+const TIMEOUT_MS = 20_000;
+
+const flags = process.argv.slice(2);
+if (flags.includes("--version") || flags.includes("-v")) {
+  console.log(VERSION);
+  process.exit(0);
+}
+if (flags.includes("--help") || flags.includes("-h")) {
+  console.log(
+    [
+      `macfax-mcp ${VERSION}`,
+      "Local stdio MCP server for the used-Mac market (https://macfax.com/developers).",
+      "",
+      "Usage: npx -y macfax-mcp            speaks MCP over stdio; point your client at it",
+      "       npx -y macfax-mcp --version  print the version",
+      "",
+      "Env:   MACFAX_API_KEY   free key, raises rate limits about 10x",
+      "                        mint one: curl -X POST https://macfax.com/api/v1/keys",
+      "       MACFAX_API_URL   override the API base (default https://macfax.com/api/v1)",
+      "",
+      "Prefer the hosted server when your client supports remote MCP: https://macfax.com/mcp",
+    ].join("\n"),
+  );
+  process.exit(0);
+}
 
 async function call(path, { method = "GET", body } = {}) {
-  const res = await fetch(`${API}${path}`, {
-    method,
-    headers: {
-      accept: "application/json",
-      ...(body ? { "content-type": "application/json" } : {}),
-      ...(KEY ? { authorization: `Bearer ${KEY}` } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+  let res;
+  try {
+    res = await fetch(`${API}${path}`, {
+      method,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: {
+        accept: "application/json",
+        "user-agent": `macfax-mcp/${VERSION} (+https://github.com/macfax/macfax-mcp)`,
+        ...(body ? { "content-type": "application/json" } : {}),
+        ...(KEY ? { authorization: `Bearer ${KEY}` } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  } catch (e) {
+    if (e?.name === "TimeoutError") {
+      throw new Error(`Macfax API did not respond within ${TIMEOUT_MS / 1000} seconds. Try again shortly.`);
+    }
+    throw e;
+  }
   const json = await res.json().catch(() => null);
   if (!res.ok) {
-    const message = json?.error?.message ?? `Macfax API returned HTTP ${res.status}`;
+    let message = json?.error?.message ?? `Macfax API returned HTTP ${res.status}`;
     const retry = res.headers.get("retry-after");
-    throw new Error(retry ? `${message} Retry after ${retry} seconds.` : message);
+    if (retry) message += ` Retry after ${retry} seconds.`;
+    if (res.status === 429 && !KEY) {
+      message +=
+        " Tip: a free API key raises rate limits about 10x. Mint one (no email needed): curl -X POST https://macfax.com/api/v1/keys, then set MACFAX_API_KEY.";
+    }
+    throw new Error(message);
   }
   return json?.data ?? json;
 }
@@ -49,7 +92,7 @@ function asToolError(err) {
 const server = new McpServer({
   name: "com.macfax/macfax",
   title: "Macfax",
-  version: "1.0.0",
+  version: VERSION,
 });
 
 const CONFIG_DESC =
@@ -78,7 +121,7 @@ server.registerTool(
   {
     title: "Get used-Mac asking-price statistics",
     description:
-      "What a used Mac configuration is listed for right now: median/p25/p75 asking price with sample size, per-channel medians with net-to-seller after fees, launch MSRP retention, and Apple trade-in floor. All figures are asking prices from live listings, never sold prices.",
+      "What a used Mac configuration is listed for right now: median/p25/p75 price with sample size, per-channel medians with net-to-seller after fees, launch MSRP retention, and Apple trade-in floor. All figures are asking prices from live listings, never sold prices.",
     inputSchema: { config: z.string().describe(CONFIG_DESC) },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   },
