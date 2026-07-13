@@ -205,7 +205,7 @@ server.registerTool(
   {
     title: "Fetch a verified Macfax report",
     description:
-      "A verified Macfax condition report as structured data: hardware-verified identity, Activation Lock / MDM / serial-match checks, coverage status, and the signing chain. Use when a listing or seller shares a macfax.com/r/ link.",
+      "A verified Macfax condition report as structured data: hardware-verified identity, Activation Lock / MDM / serial-match checks, coverage status, and the signing chain. Use when a listing or seller shares a macfax.com/r/ link. status \"superseded\" means the same Mac was re-verified more recently under a newer report; treat the payload as historical state, not current.",
     inputSchema: {
       report_id: z.string().describe("The 8-character report id from a macfax.com/r/<id> URL."),
     },
