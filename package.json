@@ -1,6 +1,6 @@
 {
   "name": "macfax-mcp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "MCP server for the used-Mac market: quality-gated live listings with deep links, asking-price stats per configuration, listing trust checks, serial lookup, verified condition reports, and standing alerts. Wraps the free Macfax API (macfax.com/developers).",
   "type": "module",
   "bin": {

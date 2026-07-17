@@ -12,7 +12,7 @@ MCP server for the used-Mac market, by [Macfax](https://macfax.com). Six tools a
 |---|---|
 | `search_mac_listings` | Live listings across eBay, Craigslist, OfferUp, Swappa, Facebook and Reddit. Scam clusters, junk titles, classified-ad bait, auctions and stale/sold rows are already filtered out; every result deep-links to the source. |
 | `get_mac_price_stats` | Asking median/p25/p75 for an exact configuration with sample size, per-channel medians and net-to-seller after fees, plus a sold slice: verified-sale percentiles (basis `direct`) or an estimate scaled from the asking band by a disclosed clearance ratio (basis `calibrated`). |
-| `check_mac_listing` | One listing's trust picture: known to Macfax, still live, flags, ask vs the typical band, verified report attached. |
+| `check_mac_listing` | One listing's trust picture: known to Macfax, still live, flags, ask vs the typical band, the platform's own seller reputation where it exists (eBay feedback, Swappa rating), verified report attached. |
 | `lookup_mac_serial` | Serial to model and year for any Mac, including 2021+ randomized serials. Also cross-references verified Macfax reports. |
 | `get_mac_report` | A verified Macfax condition report (Activation Lock, MDM, serial-match checks) as data. |
 | `create_mac_alert` | A standing watch: daily email when new matching listings appear. Human-confirmed: nothing sends until the email's owner clicks the confirmation link. |

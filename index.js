@@ -181,7 +181,7 @@ server.registerTool(
   {
     title: "Check a used-Mac listing before trusting it",
     description:
-      "The trust picture for one specific listing, by URL or Macfax listing id: whether Macfax knows it, whether it passes every quality gate, scam/junk/classified/auction flags, when a scan last verified it live, its ask against the configuration's typical asking band, and whether a verified Macfax report is attached. Facts, not verdicts.",
+      "The trust picture for one specific listing, by URL or Macfax listing id: whether Macfax knows it, whether it passes every quality gate, scam/junk/classified/auction flags, when a scan last verified it live, its ask against the configuration's typical asking band, the platform's own seller-reputation figures where the marketplace has them (seller_signals: eBay feedback, Swappa rating; null elsewhere), and whether a verified Macfax report is attached. Facts, not verdicts.",
     inputSchema: {
       url: z.string().optional().describe("The listing's URL on the source marketplace."),
       id: z.string().optional().describe("A Macfax listing id (from search results)."),
