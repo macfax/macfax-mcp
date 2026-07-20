@@ -145,7 +145,14 @@ server.registerTool(
     description:
       "Live used-Mac listings aggregated across eBay, Craigslist, OfferUp, Swappa, Facebook and Reddit, with scam clusters, junk titles, classified-ad bait, auctions and stale/sold rows filtered out. Every result deep-links to the source listing where the purchase happens.",
     inputSchema: {
-      config: z.string().optional().describe(CONFIG_DESC),
+      config: z
+        .string()
+        .optional()
+        // Listings-only leniency (mirrors the API): the other tools' config
+        // stays strict full-key.
+        .describe(
+          `${CONFIG_DESC} The year may be omitted when the rest pins one build: mac-studio-m3ultra resolves to mac-studio-m3ultra-2025.`,
+        ),
       family: z
         .enum(["macbook-pro", "macbook-air", "mac-studio", "mac-mini", "mac-pro", "imac", "imac-pro"])
         .optional(),
