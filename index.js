@@ -103,7 +103,7 @@ server.registerTool(
   {
     title: "Look up a Mac serial number",
     description:
-      "Resolve a Mac serial number to its exact model and year, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). Also reports whether a verified Macfax report exists for the serial. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
+      "Resolve a Mac serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). Also returns what that model is worth (the market block: sale estimate and asking band per configuration) and whether a verified Macfax report exists for the serial. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
     inputSchema: {
       serial: z
         .string()
@@ -123,9 +123,9 @@ server.registerTool(
 server.registerTool(
   "get_mac_price_stats",
   {
-    title: "Get used-Mac asking-price statistics",
+    title: "Get used-Mac price statistics",
     description:
-      "What a used Mac configuration is listed for right now: median/p25/p75 price with sample size, per-channel medians with net-to-seller after fees, launch MSRP retention, and Apple trade-in floor. All figures are asking prices from live listings, never sold prices.",
+      "What a used Mac configuration actually sells for AND what sellers are asking right now. The sold slice is the headline: verified-sale percentiles when the config has enough recent sales (sold.basis 'direct'; n and window ride along), else the asking band scaled by a measured clearance ratio (sold.basis 'calibrated', ratio disclosed). The asking band (median/p25/p75 with sample size), per-channel medians with net-to-seller after fees, launch MSRP retention and Apple trade-in floor ride along as seller guidance. Use the sold estimate as the price of the Mac; use asking to set a list price. The slices are separate and never blended — preserve the basis label when quoting.",
     inputSchema: { config: z.string().describe(CONFIG_DESC) },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   },
@@ -139,11 +139,36 @@ server.registerTool(
 );
 
 server.registerTool(
+  "get_mac_market_value",
+  {
+    title: "Get what a Mac model is worth",
+    description:
+      "What a used Mac is worth, from the name Apple gives the model, e.g. \"MacBook Pro (14-inch, 2021)\" or \"MacBook Air (13-inch, M4, 2025)\". Returns every Apple Silicon configuration the name can mean, each with its sale estimate (verified sales, or the asking band scaled by a measured clearance ratio; basis labeled) and its live asking band, plus an estimate across them: a single mid when the name pins one configuration, a low-to-high range when Apple's name leaves the chip open. Apple Silicon Macs only. Use the sale estimate as the price of the Mac; asking is seller guidance.",
+    inputSchema: {
+      model: z
+        .string()
+        .max(120)
+        .describe(
+          'The Mac\'s model name as Apple writes it, with a chip or a year: "MacBook Pro (14-inch, M3 Pro or M3 Max, Nov 2023)", "Mac mini (2023) with M2 Pro", "iMac (24-inch, M1, 2021)".',
+        ),
+    },
+    annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  },
+  async ({ model }) => {
+    try {
+      return asText(await call(`/market?model=${encodeURIComponent(model)}`));
+    } catch (e) {
+      return asToolError(e);
+    }
+  },
+);
+
+server.registerTool(
   "search_mac_listings",
   {
     title: "Search live used-Mac listings",
     description:
-      "Live used-Mac listings aggregated across eBay, Craigslist, OfferUp, Swappa, Facebook and Reddit, with scam clusters, junk titles, classified-ad bait, auctions and stale/sold rows filtered out. Every result deep-links to the source listing where the purchase happens.",
+      "Live used-Mac listings aggregated across eBay, Craigslist, OfferUp, Swappa, Facebook and Reddit, with scam clusters, junk titles, classified-ad bait, auctions and stale/sold rows already filtered out. Every result deep-links to the source listing where the purchase happens. Filter by configuration, family, chip, RAM, storage, price ceiling, and verified-report tier.",
     inputSchema: {
       config: z
         .string()
@@ -188,7 +213,7 @@ server.registerTool(
   {
     title: "Check a used-Mac listing before trusting it",
     description:
-      "The trust picture for one specific listing, by URL or Macfax listing id: whether Macfax knows it, whether it passes every quality gate, scam/junk/classified/auction flags, when a scan last verified it live, its ask against the configuration's typical asking band, the platform's own seller-reputation figures where the marketplace has them (seller_signals: eBay feedback, Swappa rating; null elsewhere), and whether a verified Macfax report is attached. Facts, not verdicts.",
+      "The trust picture for one specific listing, by URL (eBay/Craigslist/OfferUp/Swappa/Facebook/Reddit) or Macfax listing id: whether Macfax knows it, whether it still passes every quality gate, scam/junk/classified/auction flags, when a scan last verified it live, its ask against the configuration's typical asking band, the platform's own seller-reputation figures where the marketplace has them (seller_signals: eBay feedback, Swappa rating; null elsewhere), and whether a verified Macfax report is attached. Facts, not verdicts.",
     inputSchema: {
       url: z.string().optional().describe("The listing's URL on the source marketplace."),
       id: z.string().optional().describe("A Macfax listing id (from search results)."),
@@ -212,7 +237,7 @@ server.registerTool(
   {
     title: "Fetch a verified Macfax report",
     description:
-      "A verified Macfax condition report as structured data: hardware-verified identity, Activation Lock / MDM / serial-match checks, coverage status, and the signing chain. Use when a listing or seller shares a macfax.com/r/ link. status \"superseded\" means the same Mac was re-verified more recently under a newer report; treat the payload as historical state, not current.",
+      "A verified Macfax condition report as structured data: hardware-verified identity, Activation Lock / MDM / serial-match checks, coverage status, and the signing chain. Use when a listing or seller shares a macfax.com/r/ link and the buyer wants the facts behind it. status \"superseded\" means the same Mac was re-verified more recently under a newer report; treat the payload as historical state, not current.",
     inputSchema: {
       report_id: z.string().describe("The 8-character report id from a macfax.com/r/<id> URL."),
     },
@@ -257,6 +282,24 @@ server.registerTool(
   async (args) => {
     try {
       return asText(await call("/alerts", { method: "POST", body: args }));
+    } catch (e) {
+      return asToolError(e);
+    }
+  },
+);
+
+server.registerTool(
+  "get_macfax_credit_balance",
+  {
+    title: "Check Macfax resolution credits",
+    description:
+      "How many serial resolutions this API key has left, and what actually costs a credit. Only a brand new resolution is billed: a 2021+ (10 character) serial Macfax has never resolved and that this key has not looked up in the last 24 hours. Cached serials, pre-2021 serials, repeats within 24 hours and every other tool are free at every tier. Call this before a large batch of serials to find out whether it can be finished. Without a key it reports the anonymous allowance instead.",
+    inputSchema: {},
+    annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  },
+  async () => {
+    try {
+      return asText(await call("/credits"));
     } catch (e) {
       return asToolError(e);
     }
