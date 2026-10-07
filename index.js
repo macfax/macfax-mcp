@@ -103,11 +103,11 @@ server.registerTool(
   {
     title: "Look up a Mac serial number",
     description:
-      "Resolve a Mac serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). Also returns what that model is worth (the market block: sale estimate and asking band per configuration) and whether a verified Macfax report exists for the serial. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
+      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary, never charged). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration) and whether a verified Macfax report exists for the serial. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
     inputSchema: {
       serial: z
         .string()
-        .describe("The Mac's serial number: 10 characters on 2021+ Macs, 11-12 on older ones."),
+        .describe("The device's serial number: 10 characters on 2021+ devices (a letter first, never a vowel), 11-12 on older ones."),
     },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   },
