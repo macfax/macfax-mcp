@@ -293,7 +293,7 @@ server.registerTool(
   {
     title: "Check Macfax resolution credits",
     description:
-      "How many serial resolutions this API key has left, and what actually costs a credit. Only a brand new resolution is billed: a 2021+ (10 character) serial Macfax has never resolved and that this key has not looked up in the last 24 hours. Cached serials, pre-2021 serials, repeats within 24 hours and every other tool are free at every tier. Call this before a large batch of serials to find out whether it can be finished. Without a key it reports the anonymous allowance instead.",
+      "How many serial resolutions this API key has left, and what actually costs a credit. Only a brand new resolution is billed: a 2021+ (10 character) serial Macfax has never resolved and that this key has not already had answered in the last 24 hours. Cached serials, pre-2021 serials, repeats within 24 hours and every other tool are free at every tier. Call this before a large batch of serials to find out whether it can be finished. Without a key it reports the anonymous allowance instead.",
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   },
