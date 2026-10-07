@@ -5,9 +5,10 @@
 // client supports remote MCP; this wrapper exists for stdio-only clients and
 // for reading exactly what the tools do.
 //
-// All prices Macfax serves are asking prices from live listings, never sold
-// prices. Set MACFAX_API_KEY for ~10x rate limits (mint one free, no email:
-// `curl -X POST https://macfax.com/api/v1/keys`).
+// Every price Macfax serves is labeled by basis: the sale estimate (verified
+// sales, or the asking band scaled by a measured clearance ratio) and the
+// asking band from live listings. Set MACFAX_API_KEY for ~10x rate limits
+// (mint one free, no email: `curl -X POST https://macfax.com/api/v1/keys`).
 
 import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -180,7 +181,8 @@ server.registerTool(
         ),
       family: z
         .enum(["macbook-pro", "macbook-air", "mac-studio", "mac-mini", "mac-pro", "imac", "imac-pro"])
-        .optional(),
+        .optional()
+        .describe("Coarse browse by product family."),
       chip_tier: z.string().optional().describe("e.g. m3, m3pro, m4max, m3ultra"),
       year: z.number().int().optional(),
       ram_gb: z.number().int().optional(),

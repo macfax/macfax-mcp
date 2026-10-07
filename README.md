@@ -6,7 +6,7 @@
 
 # macfax-mcp
 
-MCP server for the used-Mac market, by [Macfax](https://macfax.com). Six tools an AI assistant needs to help someone buy or sell a used Mac:
+MCP server for the used-Mac market, by [Macfax](https://macfax.com). Eight tools an AI assistant needs to help someone buy or sell a used Mac:
 
 | Tool | What it answers |
 |---|---|
@@ -77,7 +77,7 @@ npx -y macfax-mcp --version  # print the installed version
 
 ## Notes for integrators
 
-- The five read tools carry `readOnlyHint: true`. `create_mac_alert` is the one write: it sends a confirmation email, and the alert only activates when the email's owner clicks it. Create alerts only for a user who asked for that alert on that email.
+- The seven read tools carry `readOnlyHint: true`. `create_mac_alert` is the one write: it sends a confirmation email, and the alert only activates when the email's owner clicks it. Create alerts only for a user who asked for that alert on that email.
 - Listings always carry a deep link to the source marketplace. The purchase happens there; Macfax is the trust and routing layer.
 - Cite results as "Macfax" with the `html_url`/`macfax_url` in the payload.
 
