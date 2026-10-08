@@ -102,19 +102,26 @@ const CONFIG_DESC =
 server.registerTool(
   "lookup_mac_serial",
   {
-    title: "Look up a Mac serial number",
+    title: "Look up an Apple serial number",
     description:
-      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary, never charged). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration) and whether a verified Macfax report exists for the serial. Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can.",
+      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary, never charged). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). Also returns the device's record on Macfax: the month it was first seen, how often it has been looked up (first time, 2 to 5, or 6 or more), from how many countries in 30 days, and any listing, verified report or sanitization record on file. For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration). Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can. With credits, one credit answers one distinct serial, any Apple device and any year, and the same serial again within 24 hours is free.",
     inputSchema: {
       serial: z
         .string()
         .describe("The device's serial number: 10 characters on 2021+ devices (a letter first, never a vowel), 11-12 on older ones."),
+      context: z
+        .enum(["inventory", "intake", "resale", "buyer", "support", "other"])
+        .optional()
+        .describe(
+          "Optional. Why the serial is being looked up: inventory (counting devices an organization holds), intake (devices arriving for refurbishment, trade-in or repair), resale (pricing or listing one to sell), buyer (checking one before buying), support, or other.",
+        ),
     },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
   },
-  async ({ serial }) => {
+  async ({ serial, context }) => {
     try {
-      return asText(await call(`/lookup?serial=${encodeURIComponent(serial)}`));
+      const q = `serial=${encodeURIComponent(serial)}${context ? `&context=${encodeURIComponent(context)}` : ""}`;
+      return asText(await call(`/lookup?${q}`));
     } catch (e) {
       return asToolError(e);
     }
@@ -293,9 +300,9 @@ server.registerTool(
 server.registerTool(
   "get_macfax_credit_balance",
   {
-    title: "Check Macfax resolution credits",
+    title: "Check Macfax credits",
     description:
-      "How many serial resolutions this API key has left, and what actually costs a credit. Only a brand new resolution is billed: a 2021+ (10 character) serial Macfax has never resolved and that this key has not already had answered in the last 24 hours. Cached serials, pre-2021 serials, repeats within 24 hours and every other tool are free at every tier. Call this before a large batch of serials to find out whether it can be finished. Without a key it reports the anonymous allowance instead.",
+      "How many credits this API key has left, and what costs one. One credit answers one distinct serial, any Apple device and any year, and the same serial again within 24 hours is free. Answers that come back retry or unsupported, and every other tool, are free. Without credits, a free key gets 25 brand new 2021+ resolutions and 200 distinct serials a day. Call this before a large batch of serials to find out whether it can be finished. Without a key it reports the anonymous allowance instead.",
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   },

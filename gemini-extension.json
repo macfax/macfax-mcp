@@ -1,7 +1,7 @@
 {
   "name": "macfax",
-  "version": "1.3.0",
-  "description": "Used-Mac market tools: quality-gated live listings across eBay/Craigslist/OfferUp/Swappa with deep links, sale estimates and asking bands per exact configuration, listing trust checks, serial lookup, verified condition reports, and standing alerts. Free, no account. Every price is labeled by basis.",
+  "version": "1.4.0",
+  "description": "Identify any Mac, iPad or iPhone serial and read its device record on Macfax, plus used-Mac tools: quality-gated live listings across eBay/Craigslist/OfferUp/Swappa with deep links, sale estimates and asking bands per exact configuration, listing trust checks, verified condition reports, and standing alerts. Every price is labeled by basis.",
   "mcpServers": {
     "macfax": {
       "httpUrl": "https://macfax.com/mcp",

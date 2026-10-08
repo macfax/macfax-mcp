@@ -1,7 +1,7 @@
 {
   "name": "macfax-mcp",
-  "version": "1.3.0",
-  "description": "MCP server for the used-Mac market: quality-gated live listings with deep links, sale estimates and asking bands per configuration, listing trust checks, serial lookup, verified condition reports, and standing alerts. Wraps the free Macfax API (macfax.com/developers).",
+  "version": "1.4.0",
+  "description": "MCP server for the record of Apple devices: identify any Mac, iPad or iPhone serial and read its device record on Macfax, plus quality-gated used-Mac listings with deep links, sale estimates and asking bands per configuration, listing trust checks, verified condition reports, and standing alerts. Wraps the Macfax API (macfax.com/developers).",
   "type": "module",
   "bin": {
     "macfax-mcp": "index.js"
