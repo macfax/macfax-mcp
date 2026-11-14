@@ -7,8 +7,9 @@
 //
 // Every price Macfax serves is labeled by basis: the sale estimate (verified
 // sales, or the asking band scaled by a measured clearance ratio) and the
-// asking band from live listings. Set MACFAX_API_KEY for ~10x rate limits
-// (mint one free, no email: `curl -X POST https://macfax.com/api/v1/keys`).
+// asking band from live listings. Everything is free; nothing is sold. Set
+// MACFAX_API_KEY for ~10x rate limits (mint one, no email:
+// `curl -X POST https://macfax.com/api/v1/keys`).
 
 import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -104,7 +105,7 @@ server.registerTool(
   {
     title: "Look up an Apple serial number",
     description:
-      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary, never charged). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). Also returns the device's record on Macfax: the month it was first seen, how often it has been looked up (first time, 2 to 5, or 6 or more), from how many countries in 30 days, and any listing, verified report or sanitization record on file. For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration). Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can. With credits, one credit answers one distinct serial, any Apple device and any year, and the same serial again within 24 hours is free.",
+      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary; ask again later). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). Also returns the device's record on Macfax: the month it was first seen, how often it has been looked up (first time, 2 to 5, or 6 or more), from how many countries in 30 days, and any listing, verified report or sanitization record on file. For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration). Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can. Free, within daily allowances: anonymous callers get 5 new serials a day and a free key gets 25, within 200 distinct serials a day; serials Macfax has already answered, pre-2021 serials and repeats within 24 hours do not count as new.",
     inputSchema: {
       serial: z
         .string()
@@ -196,9 +197,9 @@ server.registerTool(
       storage_gb: z.number().int().optional(),
       max_price_usd: z.number().int().optional(),
       min_tier: z
-        .enum(["listed", "free", "premium"])
+        .enum(["listed", "free"])
         .optional()
-        .describe("free/premium = only listings with a verified Macfax report attached."),
+        .describe("free = only listings with a verified Macfax report attached."),
       sort: z.enum(["fresh", "price_asc", "price_desc"]).optional(),
       limit: z.number().int().max(50).optional(),
     },
@@ -275,7 +276,10 @@ server.registerTool(
       ram_gb: z.number().int().optional(),
       storage_gb: z.number().int().optional(),
       max_price_usd: z.number().int().optional().describe("Only alert under this asking price."),
-      min_tier: z.enum(["listed", "free", "premium"]).optional(),
+      min_tier: z
+        .enum(["listed", "free"])
+        .optional()
+        .describe("free = only listings with a verified Macfax report attached."),
       under_typical: z
         .boolean()
         .optional()
@@ -298,17 +302,17 @@ server.registerTool(
 );
 
 server.registerTool(
-  "get_macfax_credit_balance",
+  "get_macfax_limits",
   {
-    title: "Check Macfax credits",
+    title: "Check Macfax limits",
     description:
-      "How many credits this API key has left, and what costs one. One credit answers one distinct serial, any Apple device and any year, and the same serial again within 24 hours is free. Answers that come back retry or unsupported, and every other tool, are free. Without credits, a free key gets 25 brand new 2021+ resolutions and 200 distinct serials a day. Call this before a large batch of serials to find out whether it can be finished. Without a key it reports the anonymous allowance instead.",
+      "What this caller may still do today: its serial lookup allowances and how much of each it has used in the last 24 hours. Macfax is free; the allowances only pace it. Anonymous callers get 5 new serials a day and a free key gets 25, within 200 distinct serials a day; serials Macfax has already answered, pre-2021 serials and repeats within 24 hours do not count as new. Call this before a large batch of serials to find out whether it can be finished today. Works with or without a key.",
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   },
   async () => {
     try {
-      return asText(await call("/credits"));
+      return asText(await call("/limits"));
     } catch (e) {
       return asToolError(e);
     }

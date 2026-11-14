@@ -17,9 +17,11 @@ MCP server for the used-Mac market, by [Macfax](https://macfax.com). Eight tools
 | `lookup_mac_serial` | Serial to model for any Mac, iPad or iPhone, including 2021+ randomized serials: a `status` (resolved, unknown_serial, unsupported, retry), Apple's device class, the model year where Apple's name carries one, the device's `record` on Macfax (first seen, how often looked up, any listing or verified report on file), and for a Mac what the model is worth. Optional `context` says why you are looking it up. Human twin: [macfax.com/lookup](https://macfax.com/lookup). |
 | `get_mac_report` | A verified Macfax condition report (Activation Lock, MDM, serial-match checks) as data. |
 | `create_mac_alert` | A standing watch: daily email when new matching listings appear. Human-confirmed: nothing sends until the email's owner clicks the confirmation link. |
-| `get_macfax_credit_balance` | How many credits your API key has left and what costs one: one credit per distinct serial answered, repeats within 24 hours free. Needs `MACFAX_API_KEY`. |
+| `get_macfax_limits` | What you may still look up today: the serial lookup allowances for this caller and how much of each it has used in the last 24 hours. Works with or without a key. |
 
-Every price is **labeled by basis**. The sold slice is the headline sale estimate: verified sales (with sample size and window) or a modeled estimate marked `calibrated` with its ratio disclosed. Asking bands come from live listings and are seller listing guidance. The API says so in-band, and we ask you to preserve the labels. Free, no account; rate limits are published at [macfax.com/developers](https://macfax.com/developers).
+Every price is **labeled by basis**. The sold slice is the headline sale estimate: verified sales (with sample size and window) or a modeled estimate marked `calibrated` with its ratio disclosed. Asking bands come from live listings and are seller listing guidance. The API says so in-band, and we ask you to preserve the labels.
+
+Everything here is free and nothing is sold, and no account is needed. Rate limits and the daily serial lookup allowances are published at [macfax.com/developers](https://macfax.com/developers).
 
 ## The hosted server (recommended)
 
