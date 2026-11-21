@@ -111,11 +111,27 @@ function asToolError(err) {
   };
 }
 
-const server = new McpServer({
-  name: "com.macfax/macfax",
-  title: "Macfax",
-  version: VERSION,
-});
+// Whose address a write carries, and when a write is called (hosted text, MCP
+// 1.8.1). An assistant that already knows its user's address may use it, so
+// the user need not type it, and says which one it used. Who a write is called
+// for does not loosen: a user who asked for it, or said yes when it was offered.
+const OWN_ADDRESS =
+  "The user's own email address: the one they gave, or the one you already know is theirs, so they need not type it. Tell them which address you used. Confirmation is required before anything sends. Never a placeholder or an invented address: those are refused, and";
+
+const OWN_ADDRESS_CONSENT =
+  "or said yes when you offered it, and only on that user's own email address";
+
+const WRITES_GUIDANCE =
+  "A user who has just had their own device identified or valued may want it followed (create_mac_follow), and one who is shopping may want a listing alert (create_mac_alert): you can offer either once, and call it only for a user who asked for it or said yes. Both go to the user's own email address: if you already know it, use it so they need not type it, and tell them which address you used.";
+
+const server = new McpServer(
+  {
+    name: "com.macfax/macfax",
+    title: "Macfax",
+    version: VERSION,
+  },
+  { instructions: WRITES_GUIDANCE },
+);
 
 const CONFIG_DESC =
   "Macfax config key: family[-screen]-chip-year, optionally -RAMgb-STORAGEgb. Examples: macbook-pro-14-m3pro-2023, mac-studio-m2ultra-2023-192gb-1024gb.";
@@ -287,11 +303,9 @@ server.registerTool(
   {
     title: "Create a standing used-Mac listing alert",
     description:
-      "Watch the market for a configuration: Macfax emails the given address when new matching listings appear. CONSENT CONTRACT: create an alert only for a user who explicitly asked for this alert on this email address. The first alert for a new email stays inactive until the email's owner clicks the confirmation link Macfax sends; nothing is emailed before that, and every alert email carries manage and unsubscribe links.",
+      `Watch the market for a configuration: Macfax emails the given address when new matching listings appear. CONSENT CONTRACT: create an alert only for a user who explicitly asked for this alert, ${OWN_ADDRESS_CONSENT}. The first alert for a new email stays inactive until the email's owner clicks the confirmation link Macfax sends; nothing is emailed before that, and every alert email carries manage and unsubscribe links.`,
     inputSchema: {
-      email: z
-        .string()
-        .describe("The user's own email address. Confirmation is required before anything sends."),
+      email: z.string().describe(`${OWN_ADDRESS} the per-caller limit is a few alerts a day.`),
       config: z.string().describe(CONFIG_DESC),
       ram_gb: z.number().int().optional(),
       storage_gb: z.number().int().optional(),
@@ -323,15 +337,15 @@ server.registerTool(
 
 // The second write, gated exactly as the first: nothing starts until the
 // address's owner follows the link in one confirmation email (hosted text,
-// API 1.8.0).
+// API 1.8.0, MCP 1.8.1).
 server.registerTool(
   "create_mac_follow",
   {
     title: "Follow an Apple device for its owner",
     description:
-      "Follow one Apple device for one person: Macfax emails the given address what the device is worth once it has a value for it, and after that writes only when that value moves or a verified Macfax report is published for the serial. CONSENT CONTRACT: ask only for a user who explicitly asked for this follow on this email address. Nothing starts with this call. Macfax sends the address one confirmation email, and the follow begins only when its owner follows the link in it (valid 7 days); nothing else is emailed before that, and every follow email carries manage and unsubscribe links. Use when a user asks to be told what their Mac, iPad or iPhone is worth, or when that changes, and gives their email.",
+      `Follow one Apple device for one person: Macfax emails the given address what the device is worth once it has a value for it, and after that writes only when that value moves or a verified Macfax report is published for the serial. CONSENT CONTRACT: ask only for a user who explicitly asked for this follow, ${OWN_ADDRESS_CONSENT}. Nothing starts with this call. Macfax sends the address one confirmation email, and the follow begins only when its owner follows the link in it (valid 7 days); nothing else is emailed before that, and every follow email carries manage and unsubscribe links. Use when a user asks to be told what their Mac, iPad or iPhone is worth, or when that changes.`,
     inputSchema: {
-      email: z.string().describe("The user's own email address, exactly as they gave it. Confirmation is required before anything sends. Never a placeholder or an invented address: those are refused, and the limit is a few requests a day."),
+      email: z.string().describe(`${OWN_ADDRESS} the limit is a few requests a day.`),
       serial: z.string().describe("The device's serial number: 10 characters on 2021+ devices (a letter first, never a vowel), 11-12 on older ones."),
       intent: z
         .enum(["buyer", "selling", "mine", "curious"])

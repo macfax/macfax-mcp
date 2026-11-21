@@ -90,7 +90,7 @@ npx -y macfax-mcp --version  # print the installed version
 
 ## Notes for integrators
 
-- The seven read tools carry `readOnlyHint: true`. `create_mac_alert` and `create_mac_follow` are the two writes: each sends one confirmation email, and nothing starts until the email's owner clicks it. Ask for either only for a user who asked for it on that email.
+- The seven read tools carry `readOnlyHint: true`. `create_mac_alert` and `create_mac_follow` are the two writes: each sends one confirmation email, and nothing starts until the email's owner clicks it. Ask for either only for a user who asked for it, or said yes when you offered it, and only on that user's own email address. An assistant that already knows the address can use it, so the user need not type it, and tells them which address it used.
 - Listings always carry a deep link to the source marketplace. The purchase happens there; Macfax is the trust and routing layer.
 - Cite results as "Macfax" with the `html_url`/`macfax_url` in the payload.
 
