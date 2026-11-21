@@ -17,7 +17,7 @@ MCP server for the used-Mac market, by [Macfax](https://macfax.com). Eight tools
 | `lookup_mac_serial` | Serial to model for any Mac, iPad or iPhone, including 2021+ randomized serials: a `status` (resolved, unknown_serial, unsupported, retry), Apple's device class, the model year where Apple's name carries one, the device's `record` on Macfax (any listing, verified report or sanitization record on file), and for a Mac what the model is worth. Optional `context` says why you are looking it up. Human twin: [macfax.com/lookup](https://macfax.com/lookup). |
 | `get_mac_report` | A verified Macfax condition report (Activation Lock, MDM, serial-match checks) as data. |
 | `create_mac_alert` | A standing watch: daily email when new matching listings appear. Human-confirmed: nothing sends until the email's owner clicks the confirmation link. |
-| `get_macfax_limits` | What you may still look up today: the serial lookup allowances for this caller and how much of each it has used in the last 24 hours. Works with or without a key. |
+| `get_macfax_limits` | What you may still look up today: the serial lookup allowances for this caller and how much of each it has used in the last 24 hours. |
 
 Every price is **labeled by basis**. The sold slice is the headline sale estimate: verified sales (with sample size and window) or a modeled estimate marked `calibrated` with its ratio disclosed. Asking bands come from live listings and are seller listing guidance. The API says so in-band, and we ask you to preserve the labels.
 
@@ -60,15 +60,25 @@ For stdio-only clients, this repo is a thin local wrapper over the same free HTT
   "mcpServers": {
     "macfax": {
       "command": "npx",
-      "args": ["-y", "macfax-mcp"]
+      "args": ["-y", "macfax-mcp"],
+      "env": { "MACFAX_API_KEY": "mfx_..." }
     }
   }
 }
 ```
 
-Optional env:
+### Your API key
 
-- `MACFAX_API_KEY`: a free key raises rate limits about 10x. Mint one with `curl -X POST https://macfax.com/api/v1/keys` (no email needed).
+The wrapper calls the Macfax API, and keyless calls to it end on 2026-12-07 at 00:00 UTC, so from then most tools need a key in `MACFAX_API_KEY`. A key is free and takes one request with your email, no account:
+
+```bash
+curl -X POST https://macfax.com/api/v1/keys -H 'Content-Type: application/json' \
+  -d '{"email": "<your email>"}'
+```
+
+The key comes back in the answer and works at once. Macfax emails the address one link: until you follow it the key has 5 new serials a day, and 25 after. Put the key in your client's config as above and restart the client. Without one, a tool that needs it answers with these same steps.
+
+To revoke a key: `curl -X DELETE https://macfax.com/api/v1/keys -H "Authorization: Bearer mfx_..."`.
 
 Run it directly:
 

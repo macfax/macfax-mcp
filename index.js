@@ -7,9 +7,13 @@
 //
 // Every price Macfax serves is labeled by basis: the sale estimate (verified
 // sales, or the asking band scaled by a measured clearance ratio) and the
-// asking band from live listings. Everything is free; nothing is sold. Set
-// MACFAX_API_KEY for ~10x rate limits (mint one, no email:
-// `curl -X POST https://macfax.com/api/v1/keys`).
+// asking band from live listings. Everything is free; nothing is sold.
+//
+// Set MACFAX_API_KEY. Keyless calls to the API end on 2026-12-07 at 00:00 UTC,
+// and this wrapper calls the API, so from then most tools need a key. A key
+// takes one request with your email (KEY_HOWTO below) and works at once, with
+// 5 new serials a day until you follow the link Macfax emails you and 25
+// after. A 401 that asks for a key comes back to the user as that instruction.
 
 import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -21,6 +25,11 @@ const { version: VERSION } = createRequire(import.meta.url)("./package.json");
 const API = process.env.MACFAX_API_URL ?? "https://macfax.com/api/v1";
 const KEY = process.env.MACFAX_API_KEY ?? null;
 const TIMEOUT_MS = 20_000;
+
+// How to get a key, in the words every message here uses.
+const MINT =
+  "curl -X POST https://macfax.com/api/v1/keys -H 'Content-Type: application/json' -d '{\"email\": \"<your email>\"}'";
+const KEY_HOWTO = `Mint a free key with your email, no account: ${MINT}. The key comes back at once; set it as MACFAX_API_KEY in this server's env in your MCP client's config and restart the client. It has 5 new serials a day until you follow the link Macfax emails you, and 25 after.`;
 
 const flags = process.argv.slice(2);
 if (flags.includes("--version") || flags.includes("-v")) {
@@ -36,8 +45,10 @@ if (flags.includes("--help") || flags.includes("-h")) {
       "Usage: npx -y macfax-mcp            speaks MCP over stdio; point your client at it",
       "       npx -y macfax-mcp --version  print the version",
       "",
-      "Env:   MACFAX_API_KEY   free key, raises rate limits about 10x",
-      "                        mint one: curl -X POST https://macfax.com/api/v1/keys",
+      "Env:   MACFAX_API_KEY   your free Macfax API key; keyless API calls end 2026-12-07,",
+      "                        so from then most tools need one. Mint one with your email:",
+      `                        ${MINT}`,
+      "                        then follow the link Macfax emails you (5 new serials a day until then, 25 after)",
       "       MACFAX_API_URL   override the API base (default https://macfax.com/api/v1)",
       "",
       "Prefer the hosted server when your client supports remote MCP: https://macfax.com/mcp",
@@ -67,17 +78,26 @@ async function call(path, { method = "GET", body } = {}) {
     throw e;
   }
   const json = await res.json().catch(() => null);
-  if (!res.ok) {
-    let message = json?.error?.message ?? `Macfax API returned HTTP ${res.status}`;
-    const retry = res.headers.get("retry-after");
-    if (retry) message += ` Retry after ${retry} seconds.`;
-    if (res.status === 429 && !KEY) {
-      message +=
-        " Tip: a free API key raises rate limits about 10x. Mint one (no email needed): curl -X POST https://macfax.com/api/v1/keys, then set MACFAX_API_KEY.";
-    }
-    throw new Error(message);
-  }
+  if (!res.ok) throw new Error(failure(res.status, json?.error?.code, json?.error?.message, res.headers.get("retry-after")));
   return json?.data ?? json;
+}
+
+// A refusal, as the user should read it. A 401 that asks for a key is an
+// instruction, not an error: keyless API calls end 2026-12-07, and every
+// install that never set MACFAX_API_KEY meets this answer then.
+function failure(status, code, apiMessage, retry) {
+  if (status === 401 && code === "key_required") {
+    return `Macfax needs an API key for this. ${KEY_HOWTO}`;
+  }
+  if (status === 401 && code === "invalid_key") {
+    return `Macfax does not know the key in MACFAX_API_KEY, or it was revoked. ${KEY_HOWTO}`;
+  }
+  let message = apiMessage ?? `Macfax API returned HTTP ${status}`;
+  if (retry) message += ` Retry after ${retry} seconds.`;
+  if (status === 429 && !KEY) {
+    message += ` Tip: a key with a verified email has about 10x the rate limits and 25 new serials a day. ${KEY_HOWTO}`;
+  }
+  return message;
 }
 
 function asText(data) {
@@ -105,7 +125,7 @@ server.registerTool(
   {
     title: "Look up an Apple serial number",
     description:
-      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary; ask again later). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). Also returns the device's record on Macfax: any listing, verified report or sanitization record on file. For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration). Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can. Free, within daily allowances: anonymous callers get 5 new serials a day and a free key gets 25, within 200 distinct serials a day; serials Macfax has already answered, pre-2021 serials and repeats within 24 hours do not count as new.",
+      "Resolve a Mac, iPad or iPhone serial number to its exact model, including 2021+ randomized serials whose characters encode nothing (so no character-decoder can read them). status says what came back: resolved, unknown_serial (no such serial; check it), unsupported (a real device whose model cannot be identified yet), or retry (temporary; ask again later). device_type is Apple's device class (Mac laptops, Mac desktops, iPad, iPhone). Also returns the device's record on Macfax: any listing, verified report or sanitization record on file. For a Mac, also returns what that model is worth (the market block: sale estimate and asking band per configuration). Lookup is advisory and cannot verify condition, Activation Lock, or possession; a Macfax report can. Free, within daily allowances: anonymous callers get 5 new serials a day. A key takes an email, starts with 5 and gets 25 once the email is verified, within 200 distinct serials a day. Serials Macfax has already answered, pre-2021 serials and repeats within 24 hours do not count as new.",
     inputSchema: {
       serial: z
         .string()
@@ -306,7 +326,7 @@ server.registerTool(
   {
     title: "Check Macfax limits",
     description:
-      "What this caller may still do today: its serial lookup allowances and how much of each it has used in the last 24 hours. Macfax is free; the allowances only pace it. Anonymous callers get 5 new serials a day and a free key gets 25, within 200 distinct serials a day; serials Macfax has already answered, pre-2021 serials and repeats within 24 hours do not count as new. Call this before a large batch of serials to find out whether it can be finished today. Works with or without a key.",
+      "What this caller may still do today: its serial lookup allowances and how much of each it has used in the last 24 hours. Macfax is free; the allowances only pace it. Anonymous callers get 5 new serials a day. A key takes an email, starts with 5 and gets 25 once the email is verified, within 200 distinct serials a day. Serials Macfax has already answered, pre-2021 serials and repeats within 24 hours do not count as new. Call this before a large batch of serials to find out whether it can be finished today.",
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   },
