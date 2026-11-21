@@ -321,6 +321,39 @@ server.registerTool(
   },
 );
 
+// The second write, gated exactly as the first: nothing starts until the
+// address's owner follows the link in one confirmation email (hosted text,
+// API 1.8.0).
+server.registerTool(
+  "create_mac_follow",
+  {
+    title: "Follow an Apple device for its owner",
+    description:
+      "Follow one Apple device for one person: Macfax emails the given address what the device is worth once it has a value for it, and after that writes only when that value moves or a verified Macfax report is published for the serial. CONSENT CONTRACT: ask only for a user who explicitly asked for this follow on this email address. Nothing starts with this call. Macfax sends the address one confirmation email, and the follow begins only when its owner follows the link in it (valid 7 days); nothing else is emailed before that, and every follow email carries manage and unsubscribe links. Use when a user asks to be told what their Mac, iPad or iPhone is worth, or when that changes, and gives their email.",
+    inputSchema: {
+      email: z.string().describe("The user's own email address, exactly as they gave it. Confirmation is required before anything sends. Never a placeholder or an invented address: those are refused, and the limit is a few requests a day."),
+      serial: z.string().describe("The device's serial number: 10 characters on 2021+ devices (a letter first, never a vowel), 11-12 on older ones."),
+      intent: z
+        .enum(["buyer", "selling", "mine", "curious"])
+        .optional()
+        .describe("Optional. Why the user follows the device: buyer (they may buy it), selling (they are selling it), mine (it is theirs), or curious."),
+    },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  },
+  async (args) => {
+    try {
+      return asText(await call("/follows", { method: "POST", body: args }));
+    } catch (e) {
+      return asToolError(e);
+    }
+  },
+);
+
 server.registerTool(
   "get_macfax_limits",
   {

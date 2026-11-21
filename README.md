@@ -6,7 +6,7 @@
 
 # macfax-mcp
 
-MCP server for the used-Mac market, by [Macfax](https://macfax.com). Eight tools an AI assistant needs to help someone buy or sell a used Mac:
+MCP server for the used-Mac market, by [Macfax](https://macfax.com). Nine tools an AI assistant needs to help someone buy or sell a used Mac:
 
 | Tool | What it answers |
 |---|---|
@@ -17,6 +17,7 @@ MCP server for the used-Mac market, by [Macfax](https://macfax.com). Eight tools
 | `lookup_mac_serial` | Serial to model for any Mac, iPad or iPhone, including 2021+ randomized serials: a `status` (resolved, unknown_serial, unsupported, retry), Apple's device class, the model year where Apple's name carries one, the device's `record` on Macfax (any listing, verified report or sanitization record on file), and for a Mac what the model is worth. Optional `context` says why you are looking it up. Human twin: [macfax.com/lookup](https://macfax.com/lookup). |
 | `get_mac_report` | A verified Macfax condition report (Activation Lock, MDM, serial-match checks) as data. |
 | `create_mac_alert` | A standing watch: daily email when new matching listings appear. Human-confirmed: nothing sends until the email's owner clicks the confirmation link. |
+| `create_mac_follow` | Follow one device for its owner: an email with what it is worth once there is a value, then only when that moves or a verified report is published. Human-confirmed: nothing starts until the email's owner clicks the confirmation link. |
 | `get_macfax_limits` | What you may still look up today: the serial lookup allowances for this caller and how much of each it has used in the last 24 hours. |
 
 Every price is **labeled by basis**. The sold slice is the headline sale estimate: verified sales (with sample size and window) or a modeled estimate marked `calibrated` with its ratio disclosed. Asking bands come from live listings and are seller listing guidance. The API says so in-band, and we ask you to preserve the labels.
@@ -89,7 +90,7 @@ npx -y macfax-mcp --version  # print the installed version
 
 ## Notes for integrators
 
-- The seven read tools carry `readOnlyHint: true`. `create_mac_alert` is the one write: it sends a confirmation email, and the alert only activates when the email's owner clicks it. Create alerts only for a user who asked for that alert on that email.
+- The seven read tools carry `readOnlyHint: true`. `create_mac_alert` and `create_mac_follow` are the two writes: each sends one confirmation email, and nothing starts until the email's owner clicks it. Ask for either only for a user who asked for it on that email.
 - Listings always carry a deep link to the source marketplace. The purchase happens there; Macfax is the trust and routing layer.
 - Cite results as "Macfax" with the `html_url`/`macfax_url` in the payload.
 
