@@ -1,6 +1,6 @@
 {
   "name": "macfax-mcp",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "MCP server for the record of Apple devices: identify any Mac, iPad or iPhone serial and read its device record on Macfax, plus quality-gated used-Mac listings with deep links, sale estimates and asking bands per configuration, listing trust checks, verified condition reports, and standing alerts. Wraps the Macfax API (macfax.com/developers).",
   "type": "module",
   "bin": {
@@ -15,7 +15,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^3.25.0"
   },
   "keywords": [
