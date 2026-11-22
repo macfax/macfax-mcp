@@ -15,21 +15,32 @@
 // 5 new serials a day until you follow the link Macfax emails you and 25
 // after. A 401 that asks for a key comes back to the user as that instruction.
 
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
 const { version: VERSION } = createRequire(import.meta.url)("./package.json");
 
+function readKeyFile() {
+  try {
+    return readFileSync(join(homedir(), ".macfax", "key"), "utf-8").trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 const API = process.env.MACFAX_API_URL ?? "https://macfax.com/api/v1";
-const KEY = process.env.MACFAX_API_KEY ?? null;
+const KEY = process.env.MACFAX_API_KEY ?? readKeyFile() ?? null;
 const TIMEOUT_MS = 20_000;
 
 // How to get a key, in the words every message here uses.
 const MINT =
   "curl -X POST https://macfax.com/api/v1/keys -H 'Content-Type: application/json' -d '{\"email\": \"<your email>\"}'";
-const KEY_HOWTO = `Mint a free key with your email, no account: ${MINT}. The key comes back at once; set it as MACFAX_API_KEY in this server's env in your MCP client's config and restart the client. It has 5 new serials a day until you follow the link Macfax emails you, and 25 after.`;
+const KEY_HOWTO = `Mint a free key with your email, no account: ${MINT}. The key comes back at once; set it as MACFAX_API_KEY in your MCP client's config and restart, or save it to ~/.macfax/key. It has 5 new serials a day until you follow the link Macfax emails you, and 25 after.`;
 
 const flags = process.argv.slice(2);
 if (flags.includes("--version") || flags.includes("-v")) {
@@ -49,6 +60,7 @@ if (flags.includes("--help") || flags.includes("-h")) {
       "                        so from then most tools need one. Mint one with your email:",
       `                        ${MINT}`,
       "                        then follow the link Macfax emails you (5 new serials a day until then, 25 after)",
+      "                        or save the key to ~/.macfax/key (read on startup if no env var is set)",
       "       MACFAX_API_URL   override the API base (default https://macfax.com/api/v1)",
       "",
       "Prefer the hosted server when your client supports remote MCP: https://macfax.com/mcp",
